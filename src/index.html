@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>SnapPress</title>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="main-content">
+        <h1>SnapPress</h1>
+        <p id="instruction">Press <span class="hotkey">⌘⇧4</span> to take a screenshot</p>
+        <button id="take-screenshot">Take Screenshot</button>
+      </div>
+      <div id="film-strip">
+        <div id="latest-screenshot">
+          <!-- Latest screenshot will be inserted here -->
+        </div>
+        <div id="older-screenshots">
+          <!-- Older screenshots will be inserted here -->
+        </div>
+      </div>
+    </div>
+    <script src="renderer.js"></script>
+  </body>
+</html>

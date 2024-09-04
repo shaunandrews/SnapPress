@@ -1,0 +1,9 @@
+This app is called SnappPress. It allows me to take screenshots and upload them to
+my WordPress site. The URL is saved to my clipboard, and I can paste it anywhere
+for others to see, like in my work Slack chat.
+
+Here's a few things to note:
+
+- This is an Electron app.
+- The app connects to a WordPress site using the WordPress REST API.
+- The primary file is `src/index.js`.

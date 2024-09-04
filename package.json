@@ -1,0 +1,38 @@
+{
+  "name": "snappress",
+  "productName": "SnapPress",
+  "version": "0.0.1",
+  "description": "Share screenshots using your WordPress site.",
+  "icon": "assets/snappress.icns",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "echo \"No linting configured\""
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.4.0",
+    "@electron-forge/maker-deb": "^7.4.0",
+    "@electron-forge/maker-rpm": "^7.4.0",
+    "@electron-forge/maker-squirrel": "^7.4.0",
+    "@electron-forge/maker-zip": "^7.4.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.4.0",
+    "@electron-forge/plugin-fuses": "^7.4.0",
+    "@electron/fuses": "^1.8.0",
+    "electron": "32.0.1"
+  },
+  "keywords": [],
+  "author": {
+    "name": "Shaun Andrews",
+    "email": "shaun@automattic.com"
+  },
+  "license": "GPL-2.0-or-later",
+  "dependencies": {
+    "axios": "^1.7.5",
+    "electron-squirrel-startup": "^1.0.1",
+    "electron-store": "^8.2.0",
+    "form-data": "^4.0.0"
+  }
+}

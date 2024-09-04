@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>SnapPress Settings</title>
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <form id="settings-form">
+      <label for="wordpress-url">WordPress URL:</label>
+      <input type="url" id="wordpress-url" required>
+
+      <label for="wordpress-username">WordPress username:</label>
+      <input type="text" id="wordpress-username" required>
+
+      <label for="wordpress-password">WordPress password:</label>
+      <input type="password" id="wordpress-password" required>
+
+      <label for="save-directory">Local screenshot location</label>
+      <div class="directory-input">
+        <input type="text" id="save-directory" readonly>
+        <button type="button" id="select-directory">Select</button>
+      </div>
+
+      <button type="submit">Save Settings</button>
+    </form>
+    <script src="settings.js"></script>
+  </body>
+</html>
