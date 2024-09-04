@@ -1,14 +1,6 @@
-const {
-  app,
-  BrowserWindow,
-  ipcMain,
-  desktopCapturer,
-  clipboard,
-  dialog,
-  globalShortcut, // Add this import
-} = require("electron");
+const { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, dialog, globalShortcut } = require("electron");
 const fs = require("fs");
-const pathModule = require("path");
+const path = require("path");
 const axios = require("axios");
 const FormData = require("form-data");
 const Store = require("electron-store");
@@ -24,24 +16,19 @@ let mainWindow;
 let settingsWindow;
 
 const createWindow = () => {
-  // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
-    icon: pathModule.join(__dirname, "../assets/snappress.icns"),
+    icon: path.join(__dirname, "../assets/snappress.icns"),
     webPreferences: {
-      preload: pathModule.join(__dirname, "preload.js"),
-      contextIsolation: true, // Change this to true
-      nodeIntegration: false, // This should be false for security
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
       autoFillEnabled: false,
     },
   });
 
-  // and load the index.html of the app.
-  mainWindow.loadFile(pathModule.join(__dirname, "index.html"));
-
-  // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+  mainWindow.loadFile(path.join(__dirname, "index.html"));
 };
 
 const createSettingsWindow = () => {
@@ -56,34 +43,29 @@ const createSettingsWindow = () => {
     parent: mainWindow,
     modal: true,
     webPreferences: {
-      preload: pathModule.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
 
-  settingsWindow.loadFile(pathModule.join(__dirname, "settings.html"));
+  settingsWindow.loadFile(path.join(__dirname, "settings.html"));
 
   settingsWindow.on("closed", () => {
     settingsWindow = null;
   });
 };
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+// App lifecycle events
 app.whenReady().then(() => {
   createWindow();
 
-  // Register the global shortcut
   globalShortcut.register("CommandOrControl+Shift+4", () => {
     if (mainWindow) {
       mainWindow.webContents.send("trigger-screenshot");
     }
   });
 
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
@@ -91,18 +73,17 @@ app.whenReady().then(() => {
   });
 });
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
+app.on("will-quit", () => {
+  globalShortcut.unregisterAll();
+});
 
+// IPC Handlers
 ipcMain.handle("capture-screen", async () => {
   const sources = await desktopCapturer.getSources({ types: ["screen"] });
   return sources;
@@ -112,10 +93,7 @@ ipcMain.handle("save-screenshot", async (event, dataURL) => {
   const base64Data = dataURL.replace(/^data:image\/png;base64,/, "");
   const settings = store.get("settings") || {};
   const saveDirectory = settings.saveDirectory || app.getPath("pictures");
-  const filePath = pathModule.join(
-    saveDirectory,
-    `screenshot-${Date.now()}.png`
-  );
+  const filePath = path.join(saveDirectory, `screenshot-${Date.now()}.png`);
 
   try {
     await fs.promises.writeFile(filePath, base64Data, "base64");
@@ -221,7 +199,6 @@ ipcMain.handle("get-settings", async () => {
   return store.get("settings");
 });
 
-// Add these new IPC handlers near the other handlers
 ipcMain.handle("hide-main-window", () => {
   if (mainWindow) {
     mainWindow.hide();
@@ -234,12 +211,10 @@ ipcMain.handle("show-main-window", () => {
   }
 });
 
-// Add this new IPC handler at the end of the file
 ipcMain.handle("copy-to-clipboard", (event, text) => {
   clipboard.writeText(text);
 });
 
-// Add this new IPC handler
 ipcMain.on("open-settings", () => {
   createSettingsWindow();
 });
@@ -250,7 +225,6 @@ ipcMain.on("close-settings", () => {
   }
 });
 
-// Add the new IPC handler for capturing a specific area
 ipcMain.handle("capture-screen-area", async (event, bounds) => {
   const sources = await desktopCapturer.getSources({ types: ["screen"] });
   return { sourceId: sources[0].id, bounds };
@@ -262,14 +236,5 @@ ipcMain.handle("select-directory", async () => {
     buttonLabel: "Select Folder",
     title: "Select Save Directory",
   });
-  if (result.canceled) {
-    return null;
-  }
-  return result.filePaths[0];
-});
-
-// Add this to handle app quit
-app.on("will-quit", () => {
-  // Unregister the global shortcut
-  globalShortcut.unregisterAll();
+  return result.canceled ? null : result.filePaths[0];
 });
