@@ -8,15 +8,19 @@
   <body>
     <form id="settings-form">
       <label for="wordpress-url">WordPress URL:</label>
+      <p>The URL of your WordPress site.</p>
       <input type="url" id="wordpress-url" required>
 
-      <label for="wordpress-username">WordPress username:</label>
+      <label for="wordpress-username">Username:</label>
+      <p>The username you use to log in to your WordPress site.</p>
       <input type="text" id="wordpress-username" required>
 
-      <label for="wordpress-password">WordPress password:</label>
+      <label for="wordpress-password">Application password:</label>
+      <p>You can generate an application password in your WordPress "User &rarr; Profile" settings.</p>
       <input type="password" id="wordpress-password" required>
 
       <label for="save-directory">Local screenshot location</label>
+      <p>The directory where screenshots will be saved locally.</p>
       <div class="directory-input">
         <input type="text" id="save-directory" readonly>
         <button type="button" id="select-directory">Select</button>

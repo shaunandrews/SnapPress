@@ -155,28 +155,29 @@ async function startScreenshotProcess() {
 }
 
 function updateFilmStrip(screenshotPath) {
-  const latestScreenshot = document.getElementById('latest-screenshot');
-  const olderScreenshots = document.getElementById('older-screenshots');
+  const latestScreenshot = document.getElementById("latest-screenshot");
+  const olderScreenshots = document.getElementById("older-screenshots");
 
   // Move current latest to older screenshots
   if (latestScreenshot.style.backgroundImage) {
-    const oldScreenshot = document.createElement('div');
-    oldScreenshot.className = 'older-screenshot';
-    oldScreenshot.style.backgroundImage = latestScreenshot.style.backgroundImage;
+    const oldScreenshot = document.createElement("div");
+    oldScreenshot.className = "older-screenshot";
+    oldScreenshot.style.backgroundImage =
+      latestScreenshot.style.backgroundImage;
     olderScreenshots.insertBefore(oldScreenshot, olderScreenshots.firstChild);
   }
 
   // Set new latest screenshot
   latestScreenshot.style.backgroundImage = `url('file://${screenshotPath}')`;
-  latestScreenshot.style.backgroundSize = 'cover';
-  latestScreenshot.style.backgroundPosition = 'center';
+  latestScreenshot.style.backgroundSize = "cover";
+  latestScreenshot.style.backgroundPosition = "center";
 }
 
 // Modify your existing code to call updateFilmStrip when a new screenshot is taken
-ipcRenderer.on('screenshot-saved', (event, path) => {
+window.electronAPI.onScreenshotSaved((event, path) => {
   updateFilmStrip(path);
 });
 
-document.getElementById("settings-icon").addEventListener("click", () => {
+document.getElementById("tool-settings").addEventListener("click", () => {
   window.electronAPI.openSettings();
 });

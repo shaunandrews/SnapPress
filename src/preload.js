@@ -18,4 +18,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   
   hideMainWindow: () => ipcRenderer.invoke("hide-main-window"),
   showMainWindow: () => ipcRenderer.invoke("show-main-window"),
+  
+  onScreenshotSaved: (callback) => ipcRenderer.on('screenshot-saved', callback),
 });

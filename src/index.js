@@ -119,6 +119,7 @@ ipcMain.handle("save-screenshot", async (event, dataURL) => {
 
   try {
     await fs.promises.writeFile(filePath, base64Data, "base64");
+    event.sender.send("screenshot-saved", filePath);
     return { success: true, filePath };
   } catch (error) {
     console.error("Failed to save screenshot:", error);
