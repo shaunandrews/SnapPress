@@ -128,6 +128,7 @@ ipcMain.handle("save-screenshot", async (event, dataURL) => {
 });
 
 ipcMain.handle("upload-to-wordpress", async (event, filePath) => {
+  console.log("Starting upload to WordPress...");
   const settings = store.get("settings");
   if (
     !settings ||
@@ -135,6 +136,7 @@ ipcMain.handle("upload-to-wordpress", async (event, filePath) => {
     !settings.wordpressUsername ||
     !settings.wordpressPassword
   ) {
+    console.error("WordPress settings are not configured");
     return { success: false, error: "WordPress settings are not configured" };
   }
 
@@ -142,24 +144,54 @@ ipcMain.handle("upload-to-wordpress", async (event, filePath) => {
   formData.append("file", fs.createReadStream(filePath));
 
   try {
-    const response = await axios.post(
+    // Step 1: Upload the file
+    const uploadResponse = await axios.post(
       `${settings.wordpressUrl}/wp-json/wp/v2/media`,
       formData,
       {
         headers: {
           ...formData.getHeaders(),
-          Authorization:
-            "Basic " +
-            Buffer.from(
-              `${settings.wordpressUsername}:${settings.wordpressPassword}`
-            ).toString("base64"),
+          Authorization: "Basic " + Buffer.from(`${settings.wordpressUsername}:${settings.wordpressPassword}`).toString("base64"),
+        },
+      }
+    );
+    console.log("File uploaded successfully");
+
+    const mediaId = uploadResponse.data.id;
+
+    // Step 2: Get the SnapPress category ID
+    const categoriesResponse = await axios.get(
+      `${settings.wordpressUrl}/wp-json/wp/v2/categories?slug=snappress`,
+      {
+        headers: {
+          Authorization: "Basic " + Buffer.from(`${settings.wordpressUsername}:${settings.wordpressPassword}`).toString("base64"),
         },
       }
     );
 
-    return { success: true, mediaUrl: response.data.source_url };
+    if (categoriesResponse.data.length === 0) {
+      console.warn("SnapPress category not found");
+      return { success: true, mediaUrl: uploadResponse.data.source_url, warning: "SnapPress category not found" };
+    }
+
+    const snapPressCategoryId = categoriesResponse.data[0].id;
+
+    // Step 3: Update the media with the SnapPress category
+    await axios.post(
+      `${settings.wordpressUrl}/wp-json/wp/v2/media/${mediaId}`,
+      { categories: [snapPressCategoryId] },
+      {
+        headers: {
+          Authorization: "Basic " + Buffer.from(`${settings.wordpressUsername}:${settings.wordpressPassword}`).toString("base64"),
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("Media updated with SnapPress category");
+
+    return { success: true, mediaUrl: uploadResponse.data.source_url };
   } catch (error) {
-    console.error("Failed to upload to WordPress:", error);
+    console.error("Failed to upload to WordPress:", error.message);
     return { success: false, error: error.message };
   }
 });
