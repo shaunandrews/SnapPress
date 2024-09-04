@@ -6,4 +6,3 @@ Here's a few things to note:
 
 - This is an Electron app.
 - The app connects to a WordPress site using the WordPress REST API.
-- The primary file is `src/index.js`.
