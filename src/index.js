@@ -151,7 +151,11 @@ ipcMain.handle("upload-to-wordpress", async (event, filePath) => {
       {
         headers: {
           ...formData.getHeaders(),
-          Authorization: "Basic " + Buffer.from(`${settings.wordpressUsername}:${settings.wordpressPassword}`).toString("base64"),
+          Authorization:
+            "Basic " +
+            Buffer.from(
+              `${settings.wordpressUsername}:${settings.wordpressPassword}`
+            ).toString("base64"),
         },
       }
     );
@@ -164,14 +168,22 @@ ipcMain.handle("upload-to-wordpress", async (event, filePath) => {
       `${settings.wordpressUrl}/wp-json/wp/v2/categories?slug=snappress`,
       {
         headers: {
-          Authorization: "Basic " + Buffer.from(`${settings.wordpressUsername}:${settings.wordpressPassword}`).toString("base64"),
+          Authorization:
+            "Basic " +
+            Buffer.from(
+              `${settings.wordpressUsername}:${settings.wordpressPassword}`
+            ).toString("base64"),
         },
       }
     );
 
     if (categoriesResponse.data.length === 0) {
       console.warn("SnapPress category not found");
-      return { success: true, mediaUrl: uploadResponse.data.source_url, warning: "SnapPress category not found" };
+      return {
+        success: true,
+        mediaUrl: uploadResponse.data.source_url,
+        warning: "SnapPress category not found",
+      };
     }
 
     const snapPressCategoryId = categoriesResponse.data[0].id;
@@ -182,7 +194,11 @@ ipcMain.handle("upload-to-wordpress", async (event, filePath) => {
       { categories: [snapPressCategoryId] },
       {
         headers: {
-          Authorization: "Basic " + Buffer.from(`${settings.wordpressUsername}:${settings.wordpressPassword}`).toString("base64"),
+          Authorization:
+            "Basic " +
+            Buffer.from(
+              `${settings.wordpressUsername}:${settings.wordpressPassword}`
+            ).toString("base64"),
           "Content-Type": "application/json",
         },
       }
