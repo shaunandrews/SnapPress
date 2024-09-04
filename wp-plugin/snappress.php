@@ -1,85 +1,117 @@
 <?php
-/**
- * Plugin Name: SnapPress
- * Description: Companion plugin for the SnapPress Mac app, creating a custom post type for screenshots.
- * Version: 1.0
- * Author: Your Name
- */
+/*
+Plugin Name: SnapPress
+Description: This plugin is a companion to the SnapPress app. It primarily adds category support to media items in WordPress so that the SnapPress desktop app can better organize screenshots.
+Version: 0.0.1
+Author: shaunandrews
+*/
 
 // Exit if accessed directly
 if (!defined('ABSPATH')) {
     exit;
 }
 
-// Register Custom Post Type
-function snappress_register_screenshot_post_type() {
-    $labels = array(
-        'name'                  => _x('Screenshots', 'Post Type General Name', 'snappress'),
-        'singular_name'         => _x('Screenshot', 'Post Type Singular Name', 'snappress'),
-        'menu_name'             => __('Screenshots', 'snappress'),
-        'name_admin_bar'        => __('Screenshot', 'snappress'),
-        'all_items'             => __('All Screenshots', 'snappress'),
-        'add_new_item'          => __('Add New Screenshot', 'snappress'),
-        'add_new'               => __('Add New', 'snappress'),
-        'new_item'              => __('New Screenshot', 'snappress'),
-        'edit_item'             => __('Edit Screenshot', 'snappress'),
-        'update_item'           => __('Update Screenshot', 'snappress'),
-        'view_item'             => __('View Screenshot', 'snappress'),
-        'view_items'            => __('View Screenshots', 'snappress'),
-        'search_items'          => __('Search Screenshot', 'snappress'),
-        'not_found'             => __('Not found', 'snappress'),
-        'not_found_in_trash'    => __('Not found in Trash', 'snappress'),
-        'featured_image'        => __('Screenshot Image', 'snappress'),
-        'set_featured_image'    => __('Set screenshot image', 'snappress'),
-        'remove_featured_image' => __('Remove screenshot image', 'snappress'),
-        'use_featured_image'    => __('Use as screenshot image', 'snappress'),
-    );
-    $args = array(
-        'label'                 => __('Screenshot', 'snappress'),
-        'description'           => __('Screenshots taken with SnapPress', 'snappress'),
-        'labels'                => $labels,
-        'supports'              => array('title', 'thumbnail'),
-        'hierarchical'          => false,
-        'public'                => true,
-        'show_ui'               => true,
-        'show_in_menu'          => true,
-        'menu_position'         => 5,
-        'menu_icon'             => 'dashicons-camera',
-        'show_in_admin_bar'     => true,
-        'show_in_nav_menus'     => true,
-        'can_export'            => true,
-        'has_archive'           => true,
-        'exclude_from_search'   => false,
-        'publicly_queryable'    => true,
-        'capability_type'       => 'post',
-        'show_in_rest'          => true,
-    );
-    register_post_type('screenshot', $args);
+// Add category support to attachments
+function snappress_add_categories_to_attachments() {
+    register_taxonomy_for_object_type('category', 'attachment');
 }
-add_action('init', 'snappress_register_screenshot_post_type', 0);
+add_action('init', 'snappress_add_categories_to_attachments');
 
-// Customize columns in the admin list view
-function snappress_customize_screenshot_columns($columns) {
-    $columns = array(
-        'cb' => $columns['cb'],
-        'title' => __('Title', 'snappress'),
-        'featured_image' => __('Screenshot', 'snappress'),
-        'date' => __('Date', 'snappress'),
-    );
-    return $columns;
-}
-add_filter('manage_screenshot_posts_columns', 'snappress_customize_screenshot_columns');
-
-// Populate custom columns in the admin list view
-function snappress_populate_screenshot_columns($column, $post_id) {
-    switch ($column) {
-        case 'featured_image':
-            if (has_post_thumbnail($post_id)) {
-                echo get_the_post_thumbnail($post_id, array(50, 50));
-            } else {
-                echo __('No screenshot', 'snappress');
-            }
-            break;
+// Check if "SnapPress" category exists, if not create it
+function snappress_create_default_category() {
+    $cat_name = 'SnapPress';
+    if (!term_exists($cat_name, 'category')) {
+        wp_insert_term(
+            $cat_name,
+            'category',
+            array(
+                'description' => 'Category for SnapPress screenshots',
+                'slug' => 'snappress'
+            )
+        );
     }
 }
-add_action('manage_screenshot_posts_custom_column', 'snappress_populate_screenshot_columns', 10, 2);
+add_action('init', 'snappress_create_default_category');
+
+// Add category column to media library
+function snappress_add_category_column($columns) {
+    $columns['categories'] = __('Categories', 'snappress');
+    return $columns;
+}
+add_filter('manage_media_columns', 'snappress_add_category_column');
+
+// Display category information in the new column
+function snappress_display_category_column($column_name, $post_id) {
+    if ('categories' === $column_name) {
+        $categories = get_the_category($post_id);
+        if (!empty($categories)) {
+            $output = array();
+            foreach ($categories as $category) {
+                $output[] = '<a href="' . esc_url(get_category_link($category->term_id)) . '">' . esc_html($category->name) . '</a>';
+            }
+            echo join(', ', $output);
+        } else {
+            echo '—';
+        }
+    }
+}
+add_action('manage_media_custom_column', 'snappress_display_category_column', 10, 2);
+
+// Add settings page
+function snappress_add_settings_page() {
+    add_options_page('SnapPress Settings', 'SnapPress', 'manage_options', 'snappress-settings', 'snappress_settings_page');
+}
+add_action('admin_menu', 'snappress_add_settings_page');
+
+// Settings page content
+function snappress_settings_page() {
+    ?>
+    <div class="wrap">
+        <h1>SnapPress Settings</h1>
+        <form method="post" action="options.php">
+            <?php
+            settings_fields('snappress_options');
+            do_settings_sections('snappress-settings');
+            submit_button();
+            ?>
+        </form>
+    </div>
+    <?php
+}
+
+// Register settings
+function snappress_register_settings() {
+    register_setting('snappress_options', 'snappress_show_in_media_library');
+    add_settings_section('snappress_main', 'Media Library Settings', null, 'snappress-settings');
+    add_settings_field('snappress_show_in_media_library', 'Show SnapPress screenshots in the Media Library', 'snappress_show_in_media_library_callback', 'snappress-settings', 'snappress_main');
+}
+add_action('admin_init', 'snappress_register_settings');
+
+// Checkbox callback
+function snappress_show_in_media_library_callback() {
+    $value = get_option('snappress_show_in_media_library', '1');
+    echo '<input type="checkbox" name="snappress_show_in_media_library" value="1" ' . checked(1, $value, false) . '/>';
+}
+
+// Modify the media library query
+function snappress_filter_media_library($query_args) {
+    $show_snappress = get_option('snappress_show_in_media_library', '1');
+    
+    if ($show_snappress !== '1') {
+        $snappress_category = get_term_by('name', 'SnapPress', 'category');
+        if ($snappress_category) {
+            if (!isset($query_args['tax_query'])) {
+                $query_args['tax_query'] = array();
+            }
+            $query_args['tax_query'][] = array(
+                'taxonomy' => 'category',
+                'field' => 'term_id',
+                'terms' => $snappress_category->term_id,
+                'operator' => 'NOT IN'
+            );
+        }
+    }
+    
+    return $query_args;
+}
+add_filter('ajax_query_attachments_args', 'snappress_filter_media_library');
