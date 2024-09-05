@@ -1,4 +1,15 @@
-const { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, dialog, globalShortcut, Tray, Menu, shell } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  desktopCapturer,
+  clipboard,
+  dialog,
+  globalShortcut,
+  Tray,
+  Menu,
+  shell,
+} = require("electron");
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
@@ -22,8 +33,8 @@ const createSettingsWindow = () => {
   }
 
   settingsWindow = new BrowserWindow({
-    width: 500,
-    height: 400,
+    width: 470,
+    height: 585,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -45,7 +56,7 @@ const createTray = () => {
     { label: "View Media Library", click: openMediaLibrary },
     { label: "Settings", click: createSettingsWindow },
     { type: "separator" },
-    { label: "Quit", click: () => app.quit() }
+    { label: "Quit", click: () => app.quit() },
   ]);
   tray.setToolTip("SnapPress");
   tray.setContextMenu(contextMenu);
@@ -72,9 +83,14 @@ const triggerScreenshot = () => {
 const openMediaLibrary = () => {
   const settings = store.get("settings");
   if (settings && settings.wordpressUrl) {
-    shell.openExternal(`${settings.wordpressUrl}/wp-admin/upload.php?mode=grid`);
+    shell.openExternal(
+      `${settings.wordpressUrl}/wp-admin/upload.php?mode=grid`
+    );
   } else {
-    dialog.showErrorBox("Error", "WordPress URL is not set. Please configure it in the settings.");
+    dialog.showErrorBox(
+      "Error",
+      "WordPress URL is not set. Please configure it in the settings."
+    );
   }
 };
 

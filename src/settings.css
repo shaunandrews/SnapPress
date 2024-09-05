@@ -1,19 +1,106 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+}
+
+:root {
+  --background-color: #ffffff;
+  --text-color: #000000;
+  --text-secondary-color: #666666;
+  --input-background: #f0f0f0;
+  --input-text: #333333;
+  --button-background: #0078d4;
+  --button-text: #ffffff;
+  --border-color: #cccccc;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-color: #1e1e1e;
+    --text-color: #ffffff;
+    --text-secondary-color: #999999;
+    --input-background: #2d2d2d;
+    --input-text: #e0e0e0;
+    --button-background: #0078d4;
+    --button-text: #ffffff;
+    --border-color: #444444;
+  }
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+input {
+  background-color: var(--input-background);
+  color: var(--input-text);
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid var(--input-background);
+}
+
+input:hover,
+input:focus {
+  border: 1px solid var(--button-background);
+}
+
+button {
+  background-color: var(--button-background);
+  color: var(--button-text);
+  padding: 10px;
+  border-radius: 5px;
 }
 
 form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  height: 100vh;
 }
 
-label {
+form main {
+  flex-grow: 1;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+form footer {
+  padding: 15px 30px;
+  position: sticky;
+  bottom: 0;
+  /* background-color: rgba(255, 255, 255, 0.5); */
+  border-top: 1px solid var(--border-color);
+  backdrop-filter: blur(35px);
+}
+
+form footer button {
+  width: 100%;
+}
+
+.setting {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.setting label {
   font-weight: bold;
+  font-size: 14px;
 }
 
-input[type="url"],
+.setting .description {
+  font-size: 12px;
+  color: var(--text-secondary-color);
+  line-height: 1.4;
+}
+
+/* input[type="url"],
 input[type="text"],
 input[type="password"] {
   width: 100%;
@@ -40,4 +127,4 @@ button {
   right: 10px;
   font-size: 20px;
   cursor: pointer;
-}
+} */
