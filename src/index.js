@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, dialog, globalShortcut } = require("electron");
+const { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, dialog, globalShortcut, Tray, Menu, shell } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
@@ -12,24 +12,8 @@ if (require("electron-squirrel-startup")) {
   app.quit();
 }
 
-let mainWindow;
+let tray = null;
 let settingsWindow;
-
-const createWindow = () => {
-  mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    icon: path.join(__dirname, "../assets/snappress.icns"),
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
-      contextIsolation: true,
-      nodeIntegration: false,
-      autoFillEnabled: false,
-    },
-  });
-
-  mainWindow.loadFile(path.join(__dirname, "index.html"));
-};
 
 const createSettingsWindow = () => {
   if (settingsWindow) {
@@ -40,8 +24,6 @@ const createSettingsWindow = () => {
   settingsWindow = new BrowserWindow({
     width: 500,
     height: 400,
-    parent: mainWindow,
-    modal: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -56,27 +38,59 @@ const createSettingsWindow = () => {
   });
 };
 
-// App lifecycle events
-app.whenReady().then(() => {
-  createWindow();
+const createTray = () => {
+  tray = new Tray(path.join(__dirname, "../assets/menu-icon.png"));
+  const contextMenu = Menu.buildFromTemplate([
+    { label: "Take a screenshot", click: triggerScreenshot },
+    { label: "View Media Library", click: openMediaLibrary },
+    { label: "Settings", click: createSettingsWindow },
+    { type: "separator" },
+    { label: "Quit", click: () => app.quit() }
+  ]);
+  tray.setToolTip("SnapPress");
+  tray.setContextMenu(contextMenu);
+};
 
-  globalShortcut.register("CommandOrControl+Shift+4", () => {
-    if (mainWindow) {
-      mainWindow.webContents.send("trigger-screenshot");
-    }
+const triggerScreenshot = () => {
+  const win = new BrowserWindow({
+    width: 1,
+    height: 1,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
   });
 
+  win.loadFile(path.join(__dirname, "temp.html"));
+  win.webContents.on("did-finish-load", () => {
+    win.webContents.send("trigger-screenshot");
+  });
+};
+
+const openMediaLibrary = () => {
+  const settings = store.get("settings");
+  if (settings && settings.wordpressUrl) {
+    shell.openExternal(`${settings.wordpressUrl}/wp-admin/upload.php?mode=grid`);
+  } else {
+    dialog.showErrorBox("Error", "WordPress URL is not set. Please configure it in the settings.");
+  }
+};
+
+// App lifecycle events
+app.whenReady().then(() => {
+  createTray();
+
+  globalShortcut.register("CommandOrControl+Shift+4", triggerScreenshot);
+
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
+    // Do nothing as we don't have a main window anymore
   });
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+  // Do nothing as we want the app to keep running with only the tray icon
 });
 
 app.on("will-quit", () => {
@@ -197,18 +211,6 @@ ipcMain.handle("save-settings", async (event, settings) => {
 
 ipcMain.handle("get-settings", async () => {
   return store.get("settings");
-});
-
-ipcMain.handle("hide-main-window", () => {
-  if (mainWindow) {
-    mainWindow.hide();
-  }
-});
-
-ipcMain.handle("show-main-window", () => {
-  if (mainWindow) {
-    mainWindow.show();
-  }
 });
 
 ipcMain.handle("copy-to-clipboard", (event, text) => {

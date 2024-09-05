@@ -5,6 +5,31 @@
   "description": "Share screenshots using your WordPress site.",
   "icon": "assets/snappress.icns",
   "main": "src/index.js",
+  "mac": {
+    "icon": "assets/snappress.icns"
+  },
+  "electronPackagerConfig": {
+    "icon": "assets/snappress.icns"
+  },
+  "electronRebuildConfig": {},
+  "electronWinstallerConfig": {
+    "icon": "assets/snappress.ico"
+  },
+  "electronInstallerDebian": {},
+  "electronInstallerRedhat": {},
+  "electronInstallerDMG": {
+    "icon": "assets/snappress.icns"
+  },
+  "electronInstallerNSIS": {
+    "installerIcon": "assets/snappress.ico"
+  },
+  "build": {
+    "mac": {
+      "extendInfo": {
+        "LSUIElement": 1
+      }
+    }
+  },
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",

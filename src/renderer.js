@@ -1,18 +1,5 @@
-// DOM Elements
-const takeScreenshotButton = document.getElementById("take-screenshot");
-const toolSettingsButton = document.getElementById("tool-settings");
-const latestScreenshot = document.getElementById("latest-screenshot");
-const olderScreenshots = document.getElementById("older-screenshots");
-
-// Event Listeners
-takeScreenshotButton.addEventListener("click", startScreenshotProcess);
-toolSettingsButton.addEventListener("click", () => window.electronAPI.openSettings());
-window.electronAPI.onTriggerScreenshot(startScreenshotProcess);
-window.electronAPI.onScreenshotSaved((event, path) => updateFilmStrip(path));
-
 // Screenshot Process
 async function startScreenshotProcess() {
-  await window.electronAPI.hideMainWindow();
   const selectionWindow = createSelectionWindow();
   setupSelectionListeners(selectionWindow);
 }
@@ -30,6 +17,7 @@ function createSelectionWindow() {
   selectionElement.style.position = "fixed";
   selectionElement.style.border = "2px solid red";
   selectionElement.style.backgroundColor = "rgba(255, 0, 0, 0.1)";
+  selectionElement.style.display = "none";
   selectionWindow.document.body.appendChild(selectionElement);
 
   return selectionWindow;
@@ -44,6 +32,8 @@ function setupSelectionListeners(selectionWindow) {
     startX = e.clientX;
     startY = e.clientY;
     isSelecting = true;
+    selectionElement.style.display = "block";
+    updateSelectionElement(selectionElement, e.clientX, e.clientY, startX, startY);
   });
 
   selectionWindow.addEventListener("mousemove", (e) => {
@@ -51,17 +41,17 @@ function setupSelectionListeners(selectionWindow) {
     updateSelectionElement(selectionElement, e.clientX, e.clientY, startX, startY);
   });
 
-  selectionWindow.addEventListener("mouseup", (e) => endSelection(selectionWindow, e));
+  selectionWindow.addEventListener("mouseup", (e) => endSelection(selectionWindow, selectionElement));
   selectionWindow.addEventListener("keydown", (e) => {
     if (e.key === "Escape") cancelSelection(selectionWindow);
   });
 }
 
 function updateSelectionElement(element, currentX, currentY, startX, startY) {
-  const width = Math.abs(currentX - startX);
-  const height = Math.abs(currentY - startY);
   const left = Math.min(currentX, startX);
   const top = Math.min(currentY, startY);
+  const width = Math.abs(currentX - startX);
+  const height = Math.abs(currentY - startY);
 
   element.style.left = `${left}px`;
   element.style.top = `${top}px`;
@@ -69,8 +59,14 @@ function updateSelectionElement(element, currentX, currentY, startX, startY) {
   element.style.height = `${height}px`;
 }
 
-async function endSelection(selectionWindow, event) {
-  const bounds = getBoundsFromSelection(selectionWindow.document.querySelector("div"));
+async function endSelection(selectionWindow, selectionElement) {
+  const bounds = {
+    x: parseInt(selectionElement.style.left),
+    y: parseInt(selectionElement.style.top),
+    width: parseInt(selectionElement.style.width),
+    height: parseInt(selectionElement.style.height)
+  };
+
   selectionWindow.close();
 
   try {
@@ -84,24 +80,11 @@ async function endSelection(selectionWindow, event) {
     }
   } catch (error) {
     console.error("Error capturing screenshot:", error);
-  } finally {
-    await window.electronAPI.showMainWindow();
   }
 }
 
 function cancelSelection(selectionWindow) {
   selectionWindow.close();
-  window.electronAPI.showMainWindow();
-}
-
-// Helper functions
-function getBoundsFromSelection(element) {
-  return {
-    x: parseInt(element.style.left),
-    y: parseInt(element.style.top),
-    width: parseInt(element.style.width),
-    height: parseInt(element.style.height),
-  };
 }
 
 async function captureScreenshot(bounds) {
@@ -129,7 +112,7 @@ async function captureScreenshot(bounds) {
   canvas.width = bounds.width;
   canvas.height = bounds.height;
   const ctx = canvas.getContext("2d");
-  ctx.drawImage(video, bounds.x, bounds.y, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height);
+  ctx.drawImage(video, 0, 0, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height);
 
   stream.getTracks().forEach((track) => track.stop());
 
@@ -140,20 +123,22 @@ async function uploadToWordPress(filePath) {
   const uploadResult = await window.electronAPI.uploadToWordPress(filePath);
   if (uploadResult.success) {
     await window.electronAPI.copyToClipboard(uploadResult.mediaUrl);
+    console.log("Screenshot uploaded and URL copied to clipboard:", uploadResult.mediaUrl);
   } else {
     console.error("Failed to upload to WordPress:", uploadResult.error);
   }
 }
 
 function updateFilmStrip(screenshotPath) {
-  if (latestScreenshot.style.backgroundImage) {
-    const oldScreenshot = document.createElement("div");
-    oldScreenshot.className = "older-screenshot";
-    oldScreenshot.style.backgroundImage = latestScreenshot.style.backgroundImage;
-    olderScreenshots.insertBefore(oldScreenshot, olderScreenshots.firstChild);
-  }
-
-  latestScreenshot.style.backgroundImage = `url('file://${screenshotPath}')`;
-  latestScreenshot.style.backgroundSize = "cover";
-  latestScreenshot.style.backgroundPosition = "center";
+  console.log("Screenshot saved:", screenshotPath);
 }
+
+// Add this event listener for the temporary window
+window.electronAPI.onTriggerScreenshot(startScreenshotProcess);
+
+// Keep the updateFilmStrip function
+function updateFilmStrip(screenshotPath) {
+  console.log("Screenshot saved:", screenshotPath);
+}
+
+// Remove any other DOM-related code or event listeners that were for the main window
